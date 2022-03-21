@@ -1,76 +1,75 @@
 const collegeModel = require('../models/collegeModel');
 const internModel = require('../models/internModel');
-const validator = require("email-validator");
-
-const isValid = function (value) {
-    if (typeof value === 'undefined' || value === null) return false
-    if (typeof value === 'string' && value.trim().length === 0) return false
-    return true;
-}
-
-
-const isValidRequestBody = function (requestBody) {
-    return Object.keys(requestBody).length > 0;
-}
-
-
-const isValidMobileNum = function (value) {
-    if (!(/^(\+\d{1,3}[- ]?)?\d{10}$/.test(value.trim()))) {
-        return false
-    }
-    return true
-}
-
-
-const isValidSyntaxOfEmail = function (value) {
-    if (!(validator.validate(value))) {
-        return false
-    }
-    return true
-}
-
-
+const validateBody = require('../validation/validation');
 
 const createCollege = async function (req, res) {
     try {
         const { name, fullName, logoLink, isDeleted } = req.body;
         const requestBody = req.body;
 
-        const collegeval = name.split(" ");
-        const abbrevation = collegeval.length
-        if (abbrevation > 1) {
-            return res.status(400).send({ status: false, msg: "Abbreviation college name should be in a single word" });
-        }
-
+        //Validate body
         if (!validateBody.isValidRequestBody(req.body)) {
             return res.status(400).send({ status: false, msg: "Please provide college body" });
         }
 
+        //Validate name
         if (!validateBody.isValid(name)) {
-            return res.status(400).send({ status: false, msg: "Please provide college name or college field" });
+            return res.status(400).send({ status: false, msg: "Please provide college name" });
         }
 
-        if (!validateBody.isValid(fullName)) {
-            return res.status(400).send({ status: false, msg: "Please provide Full college Name" });
-        }
-
-        if (!validateBody.isValid(logoLink)) {
+         //Validate the link
+         if (!validateBody.isValid(logoLink)) {
             return res.status(400).send({ status: false, msg: "Please provide logo link " });
         }
 
-        if (isDeleted === true) {
-            return res.status(400).send({ status: false, msg: "At the time of new entry isDeleted should be default value" });
+        // Validate fullname of college
+        if (!validateBody.isValid(fullName)) {
+            return res.status(400).send({ status: false, msg: "Please provide Full college Name or fullName field " });
         }
+
+
+        // Abbrevation must be a single word
+        const collegeval = name.split(" ");
+        const len = collegeval.length
+        if (len > 1) {
+            return res.status(400).send({ status: false, msg: "Abbreviated college name should be in a single word" });
+        }
+        
+
+
+        // Cheking duplicate Entry Of College 
+        let isDBexists = await collegeModel.find();
+        let DBlength = isDBexists.length
+
+        if (DBlength != 0) {
+            // Duplicate fullName i.e College Name
+            const duplicateCollegeName = await collegeModel.findOne({ fullName: fullName });
+            if (duplicateCollegeName) {
+                return res.status(400).send({ msg: "This college name is already exists" });
+            }
+
+            // Duplicate Logo Link
+            const duplicateLogolink = await collegeModel.findOne({ logoLink: logoLink })
+            if (duplicateLogolink) {
+                res.status(400).send({ status: false, msg: 'This logo link belongs to other college.' })
+            }
+        }
+        // isDeleted should be false
+        if (isDeleted === true) {
+            return res.status(400).send({ status: false, msg: "At the time of new entry no data should be deleted" });
+        }
+
+        // Finally the registration of college is succesfull
         const collegeData = await collegeModel.create(requestBody);
         res.status(201).send({ status: true, message: `College Registered Succesfully`, data: collegeData });
     }
-    
-        catch (err) {
-            console.log("This is the error :", err.message)
-            res.status(500).send({ msg: "Error", error: err.message })
-        }
-    
+    catch (err) {
+        console.log("This is the error :", err.message)
+        res.status(500).send({ msg: "Error", error: err.message })
     }
+}
 
 
-    module.exports.createCollege = createCollege
+
+
+module.exports.createCollege = createCollege 
