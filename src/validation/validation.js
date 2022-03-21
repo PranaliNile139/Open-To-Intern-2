@@ -30,5 +30,5 @@ const isValidSyntaxOfEmail = function (value) {
 
 module.exports.isValid = isValid
 module.exports.isValidRequestBody = isValidRequestBody
-module.exports.isValidSyntaxOfEmail = isValidSyntaxOfEmail
 module.exports.isValidMobileNum = isValidMobileNum
+module.exports.isValidSyntaxOfEmail = isValidSyntaxOfEmail
