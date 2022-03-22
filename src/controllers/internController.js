@@ -72,10 +72,10 @@ const createIntern = async function (req, res) {
             return res.status(400).send({ status: false, msg: "New entries can't be deleted" });
         }
         
-        // let collegeData = await collegeModel.findById( collegeId )
-        // if (!collegeData) {
-        //     return res.status(400).send({ status: false, msg: "collegeId invalid" })
-        // }
+        let collegeData = await collegeModel.findById( collegeId )
+        if (!collegeData) {
+            return res.status(400).send({ status: false, msg: "collegeId invalid" })
+        }
 
         // Finally the registration of intern is successful
         let data = { name, mobile, email, collegeId, isDeleted }
