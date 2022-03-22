@@ -7,12 +7,12 @@ const isValid = function (value) {
 }
 
 
-const isValidRequestBody = function (requestBody) {
+const isValidBody = function (requestBody) {
     return Object.keys(requestBody).length > 0;
 }
 
 
-const isValidMobileNum = function (value) {
+const isValidMobile = function (value) {
     if (!(/^(\+\d{1,3}[- ]?)?\d{10}$/.test(value.trim()))) {
         return false
     }
@@ -20,7 +20,7 @@ const isValidMobileNum = function (value) {
 }
 
 
-const isValidSyntaxOfEmail = function (value) {
+const isValidEmail = function (value) {
     if (!(validator.validate(value))) {
         return false
     }
@@ -29,6 +29,6 @@ const isValidSyntaxOfEmail = function (value) {
 
 
 module.exports.isValid = isValid
-module.exports.isValidRequestBody = isValidRequestBody
-module.exports.isValidMobileNum = isValidMobileNum
-module.exports.isValidSyntaxOfEmail = isValidSyntaxOfEmail
+module.exports.isValidBody = isValidBody
+module.exports.isValidMobile = isValidMobile
+module.exports.isValidEmail = isValidEmail

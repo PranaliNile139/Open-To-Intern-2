@@ -1,67 +1,68 @@
 const collegeModel = require('../models/collegeModel');
 const internModel = require('../models/internModel');
-const validateBody = require('../validation/validation');
+const validator = require('../validator/validation');
 
 const createCollege = async function (req, res) {
     try {
-        const { name, fullName, logoLink, isDeleted } = req.body;
-        const requestBody = req.body;
+        const body = req.body;
+        const { name, fullName, logoLink, isDeleted } = body;
 
         //Validate body
-        if (!validateBody.isValidRequestBody(req.body)) {
-            return res.status(400).send({ status: false, msg: "Please provide college body" });
+        if (!validator.isValidBody(body)) {
+            return res.status(400).send({ status: false, msg: "College body should not be empty" });
         }
 
         //Validate name
-        if (!validateBody.isValid(name)) {
-            return res.status(400).send({ status: false, msg: "Please provide college name" });
-        }
-
-         //Validate the link
-         if (!validateBody.isValid(logoLink)) {
-            return res.status(400).send({ status: false, msg: "Please provide logo link " });
+        if (!validator.isValid(name)) {
+            return res.status(400).send({ status: false, msg: "College name is required" });
         }
 
         // Validate fullname of college
-        if (!validateBody.isValid(fullName)) {
-            return res.status(400).send({ status: false, msg: "Please provide Full college Name or fullName field " });
+        if (!validator.isValid(fullName)) {
+            return res.status(400).send({ status: false, msg: "Full Name of college is required" });
+        }
+
+         //Validate the logo link
+         if (!validator.isValid(logoLink)) {
+            return res.status(400).send({ status: false, msg: "Logo link is required" });
         }
 
 
-        // Abbrevation must be a single word
-        const collegeval = name.split(" ");
-        const len = collegeval.length
-        if (len > 1) {
-            return res.status(400).send({ status: false, msg: "Abbreviated college name should be in a single word" });
+        // name must be a single word
+        
+        // const collegename = name.split(" ");
+        // const word = collegename.length
+        // if (word > 1) {
+        if(name.split(" ").length > 1) {
+            return res.status(400).send({ status: false, msg: "please provide the Valid Abbreviation" });
         }
         
 
-
         // Cheking duplicate Entry Of College 
-        let isDBexists = await collegeModel.find();
-        let DBlength = isDBexists.length
+        let duplicateEntries = await collegeModel.find();
+        let duplicateLength = duplicateEntries.length
 
-        if (DBlength != 0) {
-            // Duplicate fullName i.e College Name
+        if (duplicateLength != 0) {
+            // Checking duplicate fullName
             const duplicateCollegeName = await collegeModel.findOne({ fullName: fullName });
             if (duplicateCollegeName) {
-                return res.status(400).send({ msg: "This college name is already exists" });
+                return res.status(400).send({ msg: "College Full Name already exists" });
             }
 
             // Duplicate Logo Link
             const duplicateLogolink = await collegeModel.findOne({ logoLink: logoLink })
             if (duplicateLogolink) {
-                res.status(400).send({ status: false, msg: 'This logo link belongs to other college.' })
+                res.status(400).send({ status: false, msg: 'The logo link which you have entered belong to some other college' })
             }
         }
         // isDeleted should be false
         if (isDeleted === true) {
-            return res.status(400).send({ status: false, msg: "At the time of new entry no data should be deleted" });
+            return res.status(400).send({ status: false, msg: "New entries can't be deleted" });
         }
 
         // Finally the registration of college is succesfull
-        const collegeData = await collegeModel.create(requestBody);
-        res.status(201).send({ status: true, message: `College Registered Succesfully`, data: collegeData });
+        const collegeInfo = await collegeModel.create(body);
+        res.status(201).send({ status: true, data: collegeInfo });
     }
     catch (err) {
         console.log("This is the error :", err.message)
@@ -72,4 +73,54 @@ const createCollege = async function (req, res) {
 
 
 
-module.exports.createCollege = createCollege 
+const getCollegeDetails = async (req ,res) => {
+    try{
+        const queryParams = req.query
+        const {collegeName} = req.query
+
+        // Validate body
+        if(!validator.isValidBody(queryParams)) {
+        return res.status(400).send({ status : false , message : "Invalid Input Parameters" })
+        }
+
+        // collegeName must be a single word
+        if(collegeName.split(" ").length > 1) {
+            return res.status(400).send({ status : false, message : "please provide The Valid Abbreviation" })
+        }
+
+        // if name is invalid
+        const collegeNames = await collegeModel.findOne({ name : collegeName })
+        if(!collegeNames) {
+            return res.status(400).send({ status : false , message : "Invalid Name Of College" })
+        }
+
+        const collegeId = collegeNames._id
+
+        const InternsInCollege = await internModel.find({ collegeId : collegeId }).select({ _id : 1, email: 1, name:1, mobile:1 })
+        // if no students applied for internship in the particular college
+        if(!InternsInCollege) {
+            return res.status(400).send({ status: false, data:finalData, message: "No one applied for internship in this college"})
+        }
+
+        const {name, fullName, logoLink } = collegeNames
+
+        // Final list of College details with students name who applied for internship
+        const finalData = {
+            name: name ,
+            fullName : fullName,
+            logoLink : logoLink,
+            interns : InternsInCollege
+        }
+
+        return res.status(200).send({ status : true , message: "College Details" , Data : finalData })
+    }
+    catch (err) {
+        console.log("This is the error :", err.message)
+        res.status(500).send({ msg: "Error", error: err.message })
+    }
+}
+
+
+
+module.exports.createCollege = createCollege
+module.exports.getCollegeDetails = getCollegeDetails

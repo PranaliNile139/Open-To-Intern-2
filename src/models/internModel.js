@@ -5,7 +5,7 @@ const internSchema = new mongoose.Schema({
     
         name: {
             type: String,
-            required: 'Name of intern is required',
+            required: true,
             trim:true
         },
         email: {
@@ -16,7 +16,7 @@ const internSchema = new mongoose.Schema({
         mobile: {
             type: String,
             unique: true,
-            required:'Mobile Number is Mandatory'
+            required:true
         },
         collegeId: {
             type: ObjectId,

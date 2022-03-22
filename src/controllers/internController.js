@@ -1,79 +1,84 @@
 const collegeModel = require('../models/collegeModel');
 const internModel = require('../models/internModel');
-const validateBody = require('../validation/validation');
+const validator = require('../validator/validation');
 
 const createIntern = async function (req, res) {
     try {
-        const { name, email, mobile, collegeName, isDeleted } = req.body; 
-        const requestBody = req.body;
+        const body = req.body;
+        const { name, mobile, email, collegeName, isDeleted } = body; 
 
         // Validate body
-        if (!validateBody.isValidRequestBody(requestBody)) {
-            return res.status(400).send({ status: false, msg: "Please provide body of intern" });
+        if (!validator.isValidBody(body)) {
+            return res.status(400).send({ status: false, msg: "Intern body should not be empty" });
         }
 
         // Validate name
-        if (!validateBody.isValid(name)) {
-            return res.status(400).send({ status: false, msg: "Please provide name" });
+        if (!validator.isValid(name)) {
+            return res.status(400).send({ status: false, msg: "Intern name is required" });
         }
 
-        // Validate collegeName
-        if (!validateBody.isValid(collegeName)) {
-            return res.status(400).send({ status: false, msg: "Please provide college Name" });
-        }
-
-        // Validate email
-        if (!validateBody.isValid(email)) {
-            return res.status(400).send({ status: false, msg: "Please provide Email id" });;
-        }
-
-        // Validate syntax of Email
-        if (!validateBody.isValidSyntaxOfEmail(email)) {
-            return res.status(404).send({ status: false, msg: "Please provide a valid Email Id" });
-        }
-
-         // Validate mobile
-         if (!validateBody.isValid(mobile)) {
-            return res.status(400).send({ status: false, msg: "Please provide mobile number" });
+        // Validate mobile
+        if (!validator.isValid(mobile)) {
+            return res.status(400).send({ status: false, msg: "Mobile number is required" });
         }
 
         // Validate mobile number
-        if (!validateBody.isValidMobileNum(mobile)) {
-            return res.status(400).send({ status: false, msg: 'Please provide a valid Mobile number.' })
+        if (!validator.isValidMobileNum(mobile)) {
+            return res.status(400).send({ status: false, msg: 'Valid Mobile number is required' })
         }
 
+        // Validate email
+        if (!validator.isValid(email)) {
+            return res.status(400).send({ status: false, msg: "email is required" });;
+        }
+
+        // Validation of Email
+        if (!validator.isValidEmail(email)) {
+            return res.status(404).send({ status: false, msg: "Valid email is required" });
+        }
+
+        // Validate collegeName
+        if (!validator.isValid(collegeName)) {
+            return res.status(400).send({ status: false, msg: "Name of college is required" });
+        }
+
+        
+
         // Checking duplicate entry of intern
-        let isDBexists = await internModel.find();
-        let dbLen = isDBexists.length
-        if (dbLen != 0) {
-            //Cheking the provided email id is already exists or not in the database
-            const DuplicateEmailId = await internModel.find({ email: email });
-            const emailFound = DuplicateEmailId.length;
+        let duplicateEntries = await internModel.find();
+        let duplicateLength = duplicateEntries.length
+
+        if (duplicateLength != 0) {
+            
+            //Cheking duplicate email
+            const DuplicateEmail = await internModel.find({ email: email });
+            const emailFound = DuplicateEmail.length;
             if (emailFound != 0) {
-                return res.status(400).send({ status: false, msg: "This Email Id already exists" });
+                return res.status(400).send({ status: false, msg: "email already exists" });
             }
-            const duplicateMob = await internModel.findOne({ mobile: mobile })
-            // const duplicateMobCount = duplicateMob.length
-            if (duplicateMob) {
-                return res.status(400).send({ status: false, msg: "This mobile number already exists" });
+            
+            // Checking duplicate mobile    
+            const duplicateMobile = await internModel.findOne({ mobile: mobile })
+            if (duplicateMobile) {
+                return res.status(400).send({ status: false, msg: "Mobile number already exists" });
             }
         }
-        // Cheking the email id is duplicate or not       
+        // isDeleted should be false       
         if (isDeleted === true) {
-            return res.status(400).send({ status: false, msg: "At the time of new entry no data should be deleted" });
+            return res.status(400).send({ status: false, msg: "New entries can't be deleted" });
         }
         
         let collegeData = await collegeModel.findOne({ name: collegeName })
         if (!collegeData) {
-            res.status(400).send({ status: false, msg: "This college name does not exists." })
+            res.status(400).send({ status: false, msg: "collegeName invalid. It should be the same name as given in the name of creating college" })
         }
 
         // Finally the registration of intern is successful
         let collegeId = collegeData._id
-        let data = { name, email, mobile, collegeId, isDeleted }
+        let data = { name, mobile, email, collegeId, isDeleted }
         const internData = await internModel.create(data);
 
-        res.status(201).send({ status: true, message: 'Intern Registration successful', data: internData });
+        res.status(201).send({ status: true, data: internData });
     }
     catch (err) {
         console.log("This is the error :", err.message)
