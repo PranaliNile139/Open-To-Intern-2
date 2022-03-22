@@ -27,6 +27,11 @@ const createCollege = async function (req, res) {
             return res.status(400).send({ status: false, msg: "Logo link is required" });
         }
 
+        // Validate the Link
+        if(!validator.isValidLink(logoLink)) {
+            return res.status(400).send({status: false, msg: "Valid Logo link is required" })
+        }
+
 
         // name must be a single word
         
@@ -83,6 +88,14 @@ const getCollegeDetails = async (req ,res) => {
         return res.status(400).send({ status : false , message : "Invalid Input Parameters" })
         }
 
+        if(Object.keys(queryParams).length > 1) {
+            return res.status(400).send({ status : false, message : "Invalid Input" })
+        }
+
+        if(!collegeName) {
+            return res.status(400).send({ status : false , message : "collegeName Is Required" })
+        }
+
         // collegeName must be a single word
         if(collegeName.split(" ").length > 1) {
             return res.status(400).send({ status : false, message : "please provide The Valid Abbreviation" })
@@ -91,25 +104,24 @@ const getCollegeDetails = async (req ,res) => {
         // if name is invalid
         const collegeNames = await collegeModel.findOne({ name : collegeName })
         if(!collegeNames) {
-            return res.status(400).send({ status : false , message : "Invalid Name Of College" })
+            return res.status(404).send({ status : false , message : "College Not Found, Please Check College Name" })
         }
 
         const collegeId = collegeNames._id
 
         const InternsInCollege = await internModel.find({ collegeId : collegeId }).select({ _id : 1, email: 1, name:1, mobile:1 })
-        // if no students applied for internship in the particular college
-        if(!InternsInCollege) {
-            return res.status(400).send({ status: false, data:finalData, message: "No one applied for internship in this college"})
-        }
-
-        const {name, fullName, logoLink } = collegeNames
+        
+        const { name, fullName, logoLink } = collegeNames
 
         // Final list of College details with students name who applied for internship
+
         const finalData = {
-            name: name ,
+
+            name: name,
             fullName : fullName,
             logoLink : logoLink,
-            interns : InternsInCollege
+            interns : InternsInCollege.length ? InternsInCollege : {message: "No one applied for internship in this college"}
+            
         }
 
         return res.status(200).send({ status : true , message: "College Details" , Data : finalData })

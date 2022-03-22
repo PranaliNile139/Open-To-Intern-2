@@ -27,8 +27,17 @@ const isValidEmail = function (value) {
     return true
 }
 
+const isValidLink = function(value) {
+    if (!(/(ftp|http|https):\/\/(\w+:{0,1}\w*@)?(\S+)(:[0-9]+)?(\/|\/([\w#!:.?+=&%@!\-/]))?/.test(value.trim()))) {
+        return false
+    }
+    return true
+
+}
+
 
 module.exports.isValid = isValid
 module.exports.isValidBody = isValidBody
 module.exports.isValidMobile = isValidMobile
 module.exports.isValidEmail = isValidEmail
+module.exports.isValidLink = isValidLink
