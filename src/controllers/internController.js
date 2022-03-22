@@ -5,7 +5,7 @@ const validator = require('../validator/validation');
 const createIntern = async function (req, res) {
     try {
         const body = req.body;
-        const { name, mobile, email, collegeName, isDeleted } = body; 
+        const { name, mobile, email, collegeId, isDeleted } = body; 
 
         // Validate body
         if (!validator.isValidBody(body)) {
@@ -22,7 +22,7 @@ const createIntern = async function (req, res) {
             return res.status(400).send({ status: false, msg: "Mobile number is required" });
         }
 
-        // Validate mobile number
+        // Validation mobile number
         if (!validator.isValidMobile(mobile)) {
             return res.status(400).send({ status: false, msg: 'Valid Mobile number is required' })
         }
@@ -37,9 +37,14 @@ const createIntern = async function (req, res) {
             return res.status(404).send({ status: false, msg: "Valid email is required" });
         }
 
-        // Validate collegeName
-        if (!validator.isValid(collegeName)) {
-            return res.status(400).send({ status: false, msg: "Name of college is required" });
+        // validate object Id
+        if(!collegeId) {
+            return res.status(400).send({ status: false, msg: "CollegeId is required" });
+        }
+
+        // Validation of CollegeId
+        if(!validator.isValidobjectId(collegeId)) {
+            return res.status(400).send({ status: false, msg: `${collegeId} is Not A Valid College ID` });
         }
 
         
@@ -51,9 +56,8 @@ const createIntern = async function (req, res) {
         if (duplicateLength != 0) {
             
             //Cheking duplicate email
-            const DuplicateEmail = await internModel.find({ email: email });
-            const emailFound = DuplicateEmail.length;
-            if (emailFound != 0) {
+            const IsEmailUsed = await internModel.find({ email: email });
+            if (IsEmailUsed.length !== 0) {
                 return res.status(400).send({ status: false, msg: "email already exists" });
             }
             
@@ -68,13 +72,12 @@ const createIntern = async function (req, res) {
             return res.status(400).send({ status: false, msg: "New entries can't be deleted" });
         }
         
-        let collegeData = await collegeModel.findOne({ name: collegeName })
-        if (!collegeData) {
-            res.status(400).send({ status: false, msg: "collegeName invalid. It should be the same name as given in the name of creating college" })
-        }
+        // let collegeData = await collegeModel.findById( collegeId )
+        // if (!collegeData) {
+        //     return res.status(400).send({ status: false, msg: "collegeId invalid" })
+        // }
 
         // Finally the registration of intern is successful
-        let collegeId = collegeData._id
         let data = { name, mobile, email, collegeId, isDeleted }
         const internData = await internModel.create(data);
 

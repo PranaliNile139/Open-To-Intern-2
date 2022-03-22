@@ -17,6 +17,11 @@ const createCollege = async function (req, res) {
             return res.status(400).send({ status: false, msg: "College name is required" });
         }
 
+        // Validation of name in lowercase
+        if(!validator.isValidName(name)) {
+            return res.status(400).send({ status: false, msg: "name should be lower case"})
+        }
+
         // Validate fullname of college
         if (!validator.isValid(fullName)) {
             return res.status(400).send({ status: false, msg: "Full Name of college is required" });
@@ -51,13 +56,13 @@ const createCollege = async function (req, res) {
             // Checking duplicate fullName
             const duplicateCollegeName = await collegeModel.findOne({ fullName: fullName });
             if (duplicateCollegeName) {
-                return res.status(400).send({ msg: "College Full Name already exists" });
+                return res.status(400).send({status: false, msg: "College Full Name already exists" });
             }
 
             // Duplicate Logo Link
             const duplicateLogolink = await collegeModel.findOne({ logoLink: logoLink })
             if (duplicateLogolink) {
-                res.status(400).send({ status: false, msg: 'The logo link which you have entered belong to some other college' })
+                return res.status(400).send({ status: false, msg: 'The logo link which you have entered belong to some other college' })
             }
         }
         // isDeleted should be false
@@ -124,7 +129,7 @@ const getCollegeDetails = async (req ,res) => {
             
         }
 
-        return res.status(200).send({ status : true , message: "College Details" , Data : finalData })
+        return res.status(201).send({ status : true , message: "College Details" , Data : finalData })
     }
     catch (err) {
         console.log("This is the error :", err.message)
