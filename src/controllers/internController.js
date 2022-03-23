@@ -5,7 +5,7 @@ const validator = require('../validator/validation');
 const createIntern = async function (req, res) {
     try {
         const body = req.body;
-        const { name, mobile, email, collegeId, isDeleted } = body; 
+        const { name, mobile, email, collegeName, isDeleted } = body; 
 
         // Validate body
         if (!validator.isValidBody(body)) {
@@ -34,18 +34,18 @@ const createIntern = async function (req, res) {
 
         // Validation of Email
         if (!validator.isValidEmail(email)) {
-            return res.status(404).send({ status: false, msg: "Valid email is required" });
+            return res.status(400).send({ status: false, msg: "Valid email is required" });
         }
 
-        // validate object Id
-        if(!collegeId) {
-            return res.status(400).send({ status: false, msg: "CollegeId is required" });
+        // validate collegeName
+        if(!collegeName) {
+            return res.status(400).send({ status: false, msg: "CollegeName is required" });
         }
 
         // Validation of CollegeId
-        if(!validator.isValidobjectId(collegeId)) {
-            return res.status(400).send({ status: false, msg: `${collegeId} is Not A Valid College ID` });
-        }
+        // if(!validator.isValidobjectId(collegeId)) {
+        //     return res.status(400).send({ status: false, msg: `${collegeId} is Not A Valid College ID` });
+        // }
 
         
 
@@ -58,13 +58,13 @@ const createIntern = async function (req, res) {
             //Cheking duplicate email
             const IsEmailUsed = await internModel.find({ email: email });
             if (IsEmailUsed.length !== 0) {
-                return res.status(400).send({ status: false, msg: "email already exists" });
+                return res.status(409).send({ status: false, msg: "email already exists" });
             }
             
             // Checking duplicate mobile    
             const duplicateMobile = await internModel.findOne({ mobile: mobile })
             if (duplicateMobile) {
-                return res.status(400).send({ status: false, msg: "Mobile number already exists" });
+                return res.status(409).send({ status: false, msg: "Mobile number already exists" });
             }
         }
         // isDeleted should be false       
@@ -72,10 +72,12 @@ const createIntern = async function (req, res) {
             return res.status(400).send({ status: false, msg: "New entries can't be deleted" });
         }
         
-        let collegeData = await collegeModel.findById( collegeId )
+        let collegeData = await collegeModel.findOne({ name: collegeName })
         if (!collegeData) {
-            return res.status(400).send({ status: false, msg: "collegeId invalid" })
+            return res.status(404).send({ status: false, msg: "collegeName invalid" })
         }
+
+        const collegeId = collegeData._id
 
         // Finally the registration of intern is successful
         let data = { name, mobile, email, collegeId, isDeleted }

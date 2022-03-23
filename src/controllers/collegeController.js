@@ -53,16 +53,21 @@ const createCollege = async function (req, res) {
         let duplicateLength = duplicateEntries.length
 
         if (duplicateLength != 0) {
+             // Checking duplicate name
+             const duplicateName = await collegeModel.findOne({ name: name });
+             if (duplicateName) {
+                 return res.status(409).send({status: false, msg: "College  Name already exists" });
+             }
             // Checking duplicate fullName
             const duplicateCollegeName = await collegeModel.findOne({ fullName: fullName });
             if (duplicateCollegeName) {
-                return res.status(400).send({status: false, msg: "College Full Name already exists" });
+                return res.status(409).send({status: false, msg: "College Full Name already exists" });
             }
 
             // Duplicate Logo Link
             const duplicateLogolink = await collegeModel.findOne({ logoLink: logoLink })
             if (duplicateLogolink) {
-                return res.status(400).send({ status: false, msg: 'The logo link which you have entered belong to some other college' })
+                return res.status(409).send({ status: false, msg: 'The logo link which you have entered belong to some other college' })
             }
         }
         // isDeleted should be false
@@ -101,6 +106,12 @@ const getCollegeDetails = async (req ,res) => {
             return res.status(400).send({ status : false , message : "collegeName Is Required" })
         }
 
+        // Validation of collegeName in lowercase
+        if(!validator.isValidName(collegeName)) {
+            return res.status(400).send({ status: false, msg: "Invalid collegeName"})
+        }
+        
+
         // collegeName must be a single word
         if(collegeName.split(" ").length > 1) {
             return res.status(400).send({ status : false, message : "please provide The Valid Abbreviation" })
@@ -129,7 +140,7 @@ const getCollegeDetails = async (req ,res) => {
             
         }
 
-        return res.status(201).send({ status : true , message: "College Details" , Data : finalData })
+        return res.status(200).send({ status : true , message: "College Details" , Data : finalData })
     }
     catch (err) {
         console.log("This is the error :", err.message)
